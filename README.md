@@ -1,128 +1,61 @@
-# encodeurl
+# toidentifier
 
 [![NPM Version][npm-image]][npm-url]
 [![NPM Downloads][downloads-image]][downloads-url]
-[![Node.js Version][node-version-image]][node-version-url]
-[![Build Status][travis-image]][travis-url]
-[![Test Coverage][coveralls-image]][coveralls-url]
+[![Build Status][github-actions-ci-image]][github-actions-ci-url]
+[![Test Coverage][codecov-image]][codecov-url]
 
-Encode a URL to a percent-encoded form, excluding already-encoded sequences
+> Convert a string of words to a JavaScript identifier
 
-## Installation
+## Install
 
 This is a [Node.js](https://nodejs.org/en/) module available through the
 [npm registry](https://www.npmjs.com/). Installation is done using the
 [`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
 
-```sh
-$ npm install encodeurl
+```bash
+$ npm install toidentifier
+```
+
+## Example
+
+```js
+var toIdentifier = require('toidentifier')
+
+console.log(toIdentifier('Bad Request'))
+// => "BadRequest"
 ```
 
 ## API
 
-```js
-var encodeUrl = require('encodeurl')
-```
+This CommonJS module exports a single default function: `toIdentifier`.
 
-### encodeUrl(url)
+### toIdentifier(string)
 
-Encode a URL to a percent-encoded form, excluding already-encoded sequences.
+Given a string as the argument, it will be transformed according to
+the following rules and the new string will be returned:
 
-This function will take an already-encoded URL and encode all the non-URL
-code points (as UTF-8 byte sequences). This function will not encode the
-"%" character unless it is not part of a valid sequence (`%20` will be
-left as-is, but `%foo` will be encoded as `%25foo`).
-
-This encode is meant to be "safe" and does not throw errors. It will try as
-hard as it can to properly encode the given URL, including replacing any raw,
-unpaired surrogate pairs with the Unicode replacement character prior to
-encoding.
-
-This function is _similar_ to the intrinsic function `encodeURI`, except it
-will not encode the `%` character if that is part of a valid sequence, will
-not encode `[` and `]` (for IPv6 hostnames) and will replace raw, unpaired
-surrogate pairs with the Unicode replacement character (instead of throwing).
-
-## Examples
-
-### Encode a URL containing user-controled data
-
-```js
-var encodeUrl = require('encodeurl')
-var escapeHtml = require('escape-html')
-
-http.createServer(function onRequest (req, res) {
-  // get encoded form of inbound url
-  var url = encodeUrl(req.url)
-
-  // create html message
-  var body = '<p>Location ' + escapeHtml(url) + ' not found</p>'
-
-  // send a 404
-  res.statusCode = 404
-  res.setHeader('Content-Type', 'text/html; charset=UTF-8')
-  res.setHeader('Content-Length', String(Buffer.byteLength(body, 'utf-8')))
-  res.end(body, 'utf-8')
-})
-```
-
-### Encode a URL for use in a header field
-
-```js
-var encodeUrl = require('encodeurl')
-var escapeHtml = require('escape-html')
-var url = require('url')
-
-http.createServer(function onRequest (req, res) {
-  // parse inbound url
-  var href = url.parse(req)
-
-  // set new host for redirect
-  href.host = 'localhost'
-  href.protocol = 'https:'
-  href.slashes = true
-
-  // create location header
-  var location = encodeUrl(url.format(href))
-
-  // create html message
-  var body = '<p>Redirecting to new site: ' + escapeHtml(location) + '</p>'
-
-  // send a 301
-  res.statusCode = 301
-  res.setHeader('Content-Type', 'text/html; charset=UTF-8')
-  res.setHeader('Content-Length', String(Buffer.byteLength(body, 'utf-8')))
-  res.setHeader('Location', location)
-  res.end(body, 'utf-8')
-})
-```
-
-## Testing
-
-```sh
-$ npm test
-$ npm run lint
-```
-
-## References
-
-- [RFC 3986: Uniform Resource Identifier (URI): Generic Syntax][rfc-3986]
-- [WHATWG URL Living Standard][whatwg-url]
-
-[rfc-3986]: https://tools.ietf.org/html/rfc3986
-[whatwg-url]: https://url.spec.whatwg.org/
+1. Split into words separated by space characters (`0x20`).
+2. Upper case the first character of each word.
+3. Join the words together with no separator.
+4. Remove all non-word (`[0-9a-z_]`) characters.
 
 ## License
 
 [MIT](LICENSE)
 
-[npm-image]: https://img.shields.io/npm/v/encodeurl.svg
-[npm-url]: https://npmjs.org/package/encodeurl
-[node-version-image]: https://img.shields.io/node/v/encodeurl.svg
-[node-version-url]: https://nodejs.org/en/download
-[travis-image]: https://img.shields.io/travis/pillarjs/encodeurl.svg
-[travis-url]: https://travis-ci.org/pillarjs/encodeurl
-[coveralls-image]: https://img.shields.io/coveralls/pillarjs/encodeurl.svg
-[coveralls-url]: https://coveralls.io/r/pillarjs/encodeurl?branch=master
-[downloads-image]: https://img.shields.io/npm/dm/encodeurl.svg
-[downloads-url]: https://npmjs.org/package/encodeurl
+[codecov-image]: https://img.shields.io/codecov/c/github/component/toidentifier.svg
+[codecov-url]: https://codecov.io/gh/component/toidentifier
+[downloads-image]: https://img.shields.io/npm/dm/toidentifier.svg
+[downloads-url]: https://npmjs.org/package/toidentifier
+[github-actions-ci-image]: https://img.shields.io/github/workflow/status/component/toidentifier/ci/master?label=ci
+[github-actions-ci-url]: https://github.com/component/toidentifier?query=workflow%3Aci
+[npm-image]: https://img.shields.io/npm/v/toidentifier.svg
+[npm-url]: https://npmjs.org/package/toidentifier
+
+
+##
+
+[npm]: https://www.npmjs.com/
+
+[yarn]: https://yarnpkg.com/
