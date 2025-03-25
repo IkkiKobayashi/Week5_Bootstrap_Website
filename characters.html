@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Characters - Sousou no Frieren Wiki</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
+</head>
+<body>
+
+    <header>
+        <h1>Frieren Wiki</h1>
+        <nav>
+            <ul>
+                <li><a href="index.html">HOME</a></li>
+                <li><a href="characters.html">CHARACTERS</a></li>
+                <li><a href="about.html">ABOUT</a></li>
+                <li><a href="services.html">SERVICES</a></li>
+                <li><a href="contact.html">CONTACT</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <h2 class="section-title">Characters</h2>
+
+        <!-- Swiper Carousel -->
+        <div class="swiper-container">
+            <div class="swiper-wrapper">
+                <!-- Character 1 -->
+                <div class="swiper-slide character-card">
+                    <img src="Images\frieren-2.png" alt="Frieren">
+                    <h3>Frieren</h3>
+                    <p>The immortal elf mage who seeks to understand human emotions.</p>
+                </div>
+
+                <!-- Character 2 -->
+                <div class="swiper-slide character-card">
+                    <img src="Images\Himmel.png" alt="Himmel">
+                    <h3>Himmel</h3>
+                    <p>The brave hero who led the party against the Demon King.</p>
+                </div>
+
+                <!-- Character 3 -->
+                <div class="swiper-slide character-card">
+                    <img src="Images\fern-4.png" alt="Ferne">
+                    <h3>Ferne</h3>
+                    <p>Frieren's apprentice who travels with her on a new journey.</p>
+                </div>
+
+                <!-- Character 4 -->
+                <div class="swiper-slide character-card">
+                    <img src="Images\stark-1.png" alt="Stark">
+                    <h3>Stark</h3>
+                    <p>A brave but timid warrior who trains under Eisen and becomes Frieren’s reliable ally.</p>
+                </div>
+            </div>
+
+            <!-- Carousel Arrows -->
+            <div class="swiper-button-next"></div>
+            <div class="swiper-button-prev"></div>
+        </div>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script>
+        var swiper = new Swiper('.swiper-container', {
+            loop: true,
+            slidesPerView: 1,
+            spaceBetween: 30,
+            centeredSlides: true,
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+            breakpoints: {
+                768: { slidesPerView: 2 },
+                1024: { slidesPerView: 3 }
+            }
+        });
+    </script>
+    <footer>
+        <p>&copy; Michael Justin Surbano. All Rights Reserved.</p>
+    </footer>
+</body>
+</html>

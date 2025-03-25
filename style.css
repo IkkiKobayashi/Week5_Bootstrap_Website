@@ -1,0 +1,256 @@
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700&display=swap');
+
+/* Global Styles */
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #1a1a2e; /* Dark background */
+    color: #e0e0e0; /* Default text color */
+    margin: 0;
+    padding: 0;
+}
+
+h1, h2, h3 {
+    color: #e0c078; /* Heading color */
+    text-align: center;
+}
+
+p {
+    color: #ccc; /* Paragraph color */
+    text-align: center;
+}
+
+/* Header Styles */
+header {
+    background-color: #000000;
+    padding: 20px;
+    text-align: center;
+}
+
+nav {
+    display: flex;
+    justify-content: center;
+    background-color: #111;
+    padding: 10px 0;
+}
+
+nav ul {
+    list-style-type: none;
+    padding: 0;
+    text-align: center;
+}
+
+nav ul li {
+    display: inline;
+    margin: 0 15px;
+}
+
+nav a {
+    color: #f5c518; /* Link color */
+    text-decoration: none;
+    font-weight: bold;
+    padding: 0 15px;
+}
+.btn-container {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.btn {
+    display: inline-block;
+    background-color: #f5c518; /* Gold color */
+    color: #1a1a2e;
+    padding: 12px 24px;
+    font-size: 1.2em;
+    font-weight: bold;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.btn:hover {
+    background-color: #e0b400;
+    transform: scale(1.05);
+}
+
+.centered-images {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 20px;
+}
+
+.centered-images img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+
+/* Hero Section */
+.hero {
+    position: relative;
+    text-align: center;
+    color: white;
+    max-height: 400px;
+    overflow: hidden;
+}
+
+.hero img {
+    width: 100%;
+    height: auto;
+}
+
+.hero-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.7);
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.hero-text h2 {
+    font-size: 2.5em;
+    color: #f5c518; /* Hero text color */
+    margin: 0;
+}
+
+.hero-text p {
+    font-size: 1.2em;
+    margin-top: 10px;
+}
+
+/* Synopsis Section */
+.synopsis {
+    text-align: center;
+    padding: 50px 20px;
+    background: #252525;
+}
+
+/* Index Page - Content Container */
+.content-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    padding: 50px 0;
+}
+
+.content-box {
+    background: #333;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    width: 300px;
+}
+
+.content-box img {
+    width: 100%;
+    height: 250px; /* Fixed height for consistency */
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+/* Character Section */
+.character-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    padding: 50px 0;
+}
+
+.character-card {
+    background: #333;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    width: 250px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.character-card img {
+    width: 100%;
+    height: 250px; /* Fixed height for consistency */
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.character-card h3 {
+    color: #f5c518; /* Character card heading color */
+    font-size: 1.5em;
+    margin: 10px 0;
+}
+
+.character-card p {
+    font-size: 1em;
+    padding: 0 10px;
+}
+
+/* Carousel Styles */
+.carousel {
+    position: relative;
+    width: 80%;
+    margin: auto;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.carousel img {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+}
+/* Carousel Container */
+.carousel {
+    position: relative;
+    width: 50%;
+    max-width: 500px;
+    margin: auto;
+    overflow: hidden;
+    border-radius: 10px;
+}
+
+/* Image Wrapper */
+.carousel-images {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+    width: 300%;
+}
+
+/* Individual Images */
+.carousel-images img {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+/* Navigation Buttons */
+.prev, .next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    font-size: 20px;
+    border-radius: 5px;
+}
+
+.prev { left: 10px; }
+.next { right: 10px; }
+
+.prev:hover, .next:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
