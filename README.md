@@ -1,156 +1,233 @@
-## Pure JS character encoding conversion [![Build Status](https://travis-ci.org/ashtuchkin/iconv-lite.svg?branch=master)](https://travis-ci.org/ashtuchkin/iconv-lite)
+# ipaddr.js — an IPv6 and IPv4 address manipulation library [![Build Status](https://travis-ci.org/whitequark/ipaddr.js.svg)](https://travis-ci.org/whitequark/ipaddr.js)
 
- * Doesn't need native code compilation. Works on Windows and in sandboxed environments like [Cloud9](http://c9.io).
- * Used in popular projects like [Express.js (body_parser)](https://github.com/expressjs/body-parser), 
-   [Grunt](http://gruntjs.com/), [Nodemailer](http://www.nodemailer.com/), [Yeoman](http://yeoman.io/) and others.
- * Faster than [node-iconv](https://github.com/bnoordhuis/node-iconv) (see below for performance comparison).
- * Intuitive encode/decode API
- * Streaming support for Node v0.10+
- * [Deprecated] Can extend Node.js primitives (buffers, streams) to support all iconv-lite encodings.
- * In-browser usage via [Browserify](https://github.com/substack/node-browserify) (~180k gzip compressed with Buffer shim included).
- * Typescript [type definition file](https://github.com/ashtuchkin/iconv-lite/blob/master/lib/index.d.ts) included.
- * React Native is supported (need to explicitly `npm install` two more modules: `buffer` and `stream`).
- * License: MIT.
+ipaddr.js is a small (1.9K minified and gzipped) library for manipulating
+IP addresses in JavaScript environments. It runs on both CommonJS runtimes
+(e.g. [nodejs]) and in a web browser.
 
-[![NPM Stats](https://nodei.co/npm/iconv-lite.png?downloads=true&downloadRank=true)](https://npmjs.org/packages/iconv-lite/)
+ipaddr.js allows you to verify and parse string representation of an IP
+address, match it against a CIDR range or range list, determine if it falls
+into some reserved ranges (examples include loopback and private ranges),
+and convert between IPv4 and IPv4-mapped IPv6 addresses.
 
-## Usage
-### Basic API
-```javascript
-var iconv = require('iconv-lite');
+[nodejs]: http://nodejs.org
 
-// Convert from an encoded buffer to js string.
-str = iconv.decode(Buffer.from([0x68, 0x65, 0x6c, 0x6c, 0x6f]), 'win1251');
+## Installation
 
-// Convert from js string to an encoded buffer.
-buf = iconv.encode("Sample input string", 'win1251');
+`npm install ipaddr.js`
 
-// Check if encoding is supported
-iconv.encodingExists("us-ascii")
+or
+
+`bower install ipaddr.js`
+
+## API
+
+ipaddr.js defines one object in the global scope: `ipaddr`. In CommonJS,
+it is exported from the module:
+
+```js
+var ipaddr = require('ipaddr.js');
 ```
 
-### Streaming API (Node v0.10+)
-```javascript
+The API consists of several global methods and two classes: ipaddr.IPv6 and ipaddr.IPv4.
 
-// Decode stream (from binary stream to js strings)
-http.createServer(function(req, res) {
-    var converterStream = iconv.decodeStream('win1251');
-    req.pipe(converterStream);
+### Global methods
 
-    converterStream.on('data', function(str) {
-        console.log(str); // Do something with decoded strings, chunk-by-chunk.
-    });
-});
+There are three global methods defined: `ipaddr.isValid`, `ipaddr.parse` and
+`ipaddr.process`. All of them receive a string as a single parameter.
 
-// Convert encoding streaming example
-fs.createReadStream('file-in-win1251.txt')
-    .pipe(iconv.decodeStream('win1251'))
-    .pipe(iconv.encodeStream('ucs2'))
-    .pipe(fs.createWriteStream('file-in-ucs2.txt'));
+The `ipaddr.isValid` method returns `true` if the address is a valid IPv4 or
+IPv6 address, and `false` otherwise. It does not throw any exceptions.
 
-// Sugar: all encode/decode streams have .collect(cb) method to accumulate data.
-http.createServer(function(req, res) {
-    req.pipe(iconv.decodeStream('win1251')).collect(function(err, body) {
-        assert(typeof body == 'string');
-        console.log(body); // full request body string
-    });
-});
+The `ipaddr.parse` method returns an object representing the IP address,
+or throws an `Error` if the passed string is not a valid representation of an
+IP address.
+
+The `ipaddr.process` method works just like the `ipaddr.parse` one, but it
+automatically converts IPv4-mapped IPv6 addresses to their IPv4 counterparts
+before returning. It is useful when you have a Node.js instance listening
+on an IPv6 socket, and the `net.ivp6.bindv6only` sysctl parameter (or its
+equivalent on non-Linux OS) is set to 0. In this case, you can accept IPv4
+connections on your IPv6-only socket, but the remote address will be mangled.
+Use `ipaddr.process` method to automatically demangle it.
+
+### Object representation
+
+Parsing methods return an object which descends from `ipaddr.IPv6` or
+`ipaddr.IPv4`. These objects share some properties, but most of them differ.
+
+#### Shared properties
+
+One can determine the type of address by calling `addr.kind()`. It will return
+either `"ipv6"` or `"ipv4"`.
+
+An address can be converted back to its string representation with `addr.toString()`.
+Note that this method:
+ * does not return the original string used to create the object (in fact, there is
+   no way of getting that string)
+ * returns a compact representation (when it is applicable)
+
+A `match(range, bits)` method can be used to check if the address falls into a
+certain CIDR range.
+Note that an address can be (obviously) matched only against an address of the same type.
+
+For example:
+
+```js
+var addr = ipaddr.parse("2001:db8:1234::1");
+var range = ipaddr.parse("2001:db8::");
+
+addr.match(range, 32); // => true
 ```
 
-### [Deprecated] Extend Node.js own encodings
-> NOTE: This doesn't work on latest Node versions. See [details](https://github.com/ashtuchkin/iconv-lite/wiki/Node-v4-compatibility).
+Alternatively, `match` can also be called as `match([range, bits])`. In this way,
+it can be used together with the `parseCIDR(string)` method, which parses an IP
+address together with a CIDR range.
 
-```javascript
-// After this call all Node basic primitives will understand iconv-lite encodings.
-iconv.extendNodeEncodings();
+For example:
 
-// Examples:
-buf = new Buffer(str, 'win1251');
-buf.write(str, 'gbk');
-str = buf.toString('latin1');
-assert(Buffer.isEncoding('iso-8859-15'));
-Buffer.byteLength(str, 'us-ascii');
+```js
+var addr = ipaddr.parse("2001:db8:1234::1");
 
-http.createServer(function(req, res) {
-    req.setEncoding('big5');
-    req.collect(function(err, body) {
-        console.log(body);
-    });
-});
-
-fs.createReadStream("file.txt", "shift_jis");
-
-// External modules are also supported (if they use Node primitives, which they probably do).
-request = require('request');
-request({
-    url: "http://github.com/", 
-    encoding: "cp932"
-});
-
-// To remove extensions
-iconv.undoExtendNodeEncodings();
+addr.match(ipaddr.parseCIDR("2001:db8::/32")); // => true
 ```
 
-## Supported encodings
+A `range()` method returns one of predefined names for several special ranges defined
+by IP protocols. The exact names (and their respective CIDR ranges) can be looked up
+in the source: [IPv6 ranges] and [IPv4 ranges]. Some common ones include `"unicast"`
+(the default one) and `"reserved"`.
 
- *  All node.js native encodings: utf8, ucs2 / utf16-le, ascii, binary, base64, hex.
- *  Additional unicode encodings: utf16, utf16-be, utf-7, utf-7-imap.
- *  All widespread singlebyte encodings: Windows 125x family, ISO-8859 family, 
-    IBM/DOS codepages, Macintosh family, KOI8 family, all others supported by iconv library. 
-    Aliases like 'latin1', 'us-ascii' also supported.
- *  All widespread multibyte encodings: CP932, CP936, CP949, CP950, GB2312, GBK, GB18030, Big5, Shift_JIS, EUC-JP.
+You can match against your own range list by using
+`ipaddr.subnetMatch(address, rangeList, defaultName)` method. It can work with a mix of IPv6 or IPv4 addresses, and accepts a name-to-subnet map as the range list. For example:
 
-See [all supported encodings on wiki](https://github.com/ashtuchkin/iconv-lite/wiki/Supported-Encodings).
+```js
+var rangeList = {
+  documentationOnly: [ ipaddr.parse('2001:db8::'), 32 ],
+  tunnelProviders: [
+    [ ipaddr.parse('2001:470::'), 32 ], // he.net
+    [ ipaddr.parse('2001:5c0::'), 32 ]  // freenet6
+  ]
+};
+ipaddr.subnetMatch(ipaddr.parse('2001:470:8:66::1'), rangeList, 'unknown'); // => "tunnelProviders"
+```
 
-Most singlebyte encodings are generated automatically from [node-iconv](https://github.com/bnoordhuis/node-iconv). Thank you Ben Noordhuis and libiconv authors!
+The addresses can be converted to their byte representation with `toByteArray()`.
+(Actually, JavaScript mostly does not know about byte buffers. They are emulated with
+arrays of numbers, each in range of 0..255.)
 
-Multibyte encodings are generated from [Unicode.org mappings](http://www.unicode.org/Public/MAPPINGS/) and [WHATWG Encoding Standard mappings](http://encoding.spec.whatwg.org/). Thank you, respective authors!
+```js
+var bytes = ipaddr.parse('2a00:1450:8007::68').toByteArray(); // ipv6.google.com
+bytes // => [42, 0x00, 0x14, 0x50, 0x80, 0x07, 0x00, <zeroes...>, 0x00, 0x68 ]
+```
 
+The `ipaddr.IPv4` and `ipaddr.IPv6` objects have some methods defined, too. All of them
+have the same interface for both protocols, and are similar to global methods.
 
-## Encoding/decoding speed
+`ipaddr.IPvX.isValid(string)` can be used to check if the string is a valid address
+for particular protocol, and `ipaddr.IPvX.parse(string)` is the error-throwing parser.
 
-Comparison with node-iconv module (1000x256kb, on MacBook Pro, Core i5/2.6 GHz, Node v0.12.0). 
-Note: your results may vary, so please always check on your hardware.
+`ipaddr.IPvX.isValid(string)` uses the same format for parsing as the POSIX `inet_ntoa` function, which accepts unusual formats like `0xc0.168.1.1` or `0x10000000`. The function `ipaddr.IPv4.isValidFourPartDecimal(string)` validates the IPv4 address and also ensures that it is written in four-part decimal format.
 
-    operation             iconv@2.1.4   iconv-lite@0.4.7
-    ----------------------------------------------------------
-    encode('win1251')     ~96 Mb/s      ~320 Mb/s
-    decode('win1251')     ~95 Mb/s      ~246 Mb/s
+[IPv6 ranges]: https://github.com/whitequark/ipaddr.js/blob/master/src/ipaddr.coffee#L186
+[IPv4 ranges]: https://github.com/whitequark/ipaddr.js/blob/master/src/ipaddr.coffee#L71
 
-## BOM handling
+#### IPv6 properties
 
- * Decoding: BOM is stripped by default, unless overridden by passing `stripBOM: false` in options
-   (f.ex. `iconv.decode(buf, enc, {stripBOM: false})`).
-   A callback might also be given as a `stripBOM` parameter - it'll be called if BOM character was actually found.
- * If you want to detect UTF-8 BOM when decoding other encodings, use [node-autodetect-decoder-stream](https://github.com/danielgindi/node-autodetect-decoder-stream) module.
- * Encoding: No BOM added, unless overridden by `addBOM: true` option.
+Sometimes you will want to convert IPv6 not to a compact string representation (with
+the `::` substitution); the `toNormalizedString()` method will return an address where
+all zeroes are explicit.
 
-## UTF-16 Encodings
+For example:
 
-This library supports UTF-16LE, UTF-16BE and UTF-16 encodings. First two are straightforward, but UTF-16 is trying to be
-smart about endianness in the following ways:
- * Decoding: uses BOM and 'spaces heuristic' to determine input endianness. Default is UTF-16LE, but can be 
-   overridden with `defaultEncoding: 'utf-16be'` option. Strips BOM unless `stripBOM: false`.
- * Encoding: uses UTF-16LE and writes BOM by default. Use `addBOM: false` to override.
+```js
+var addr = ipaddr.parse("2001:0db8::0001");
+addr.toString(); // => "2001:db8::1"
+addr.toNormalizedString(); // => "2001:db8:0:0:0:0:0:1"
+```
 
-## Other notes
+The `isIPv4MappedAddress()` method will return `true` if this address is an IPv4-mapped
+one, and `toIPv4Address()` will return an IPv4 object address.
 
-When decoding, be sure to supply a Buffer to decode() method, otherwise [bad things usually happen](https://github.com/ashtuchkin/iconv-lite/wiki/Use-Buffers-when-decoding).  
-Untranslatable characters are set to � or ?. No transliteration is currently supported.  
-Node versions 0.10.31 and 0.11.13 are buggy, don't use them (see #65, #77).  
+To access the underlying binary representation of the address, use `addr.parts`.
 
-## Testing
+```js
+var addr = ipaddr.parse("2001:db8:10::1234:DEAD");
+addr.parts // => [0x2001, 0xdb8, 0x10, 0, 0, 0, 0x1234, 0xdead]
+```
 
-```bash
-$ git clone git@github.com:ashtuchkin/iconv-lite.git
-$ cd iconv-lite
-$ npm install
-$ npm test
-    
-$ # To view performance:
-$ node test/performance.js
+A IPv6 zone index can be accessed via `addr.zoneId`:
 
-$ # To view test coverage:
-$ npm run coverage
-$ open coverage/lcov-report/index.html
+```js
+var addr = ipaddr.parse("2001:db8::%eth0");
+addr.zoneId // => 'eth0'
+```
+
+#### IPv4 properties
+
+`toIPv4MappedAddress()` will return a corresponding IPv4-mapped IPv6 address.
+
+To access the underlying representation of the address, use `addr.octets`.
+
+```js
+var addr = ipaddr.parse("192.168.1.1");
+addr.octets // => [192, 168, 1, 1]
+```
+
+`prefixLengthFromSubnetMask()` will return a CIDR prefix length for a valid IPv4 netmask or
+null if the netmask is not valid.
+
+```js
+ipaddr.IPv4.parse('255.255.255.240').prefixLengthFromSubnetMask() == 28
+ipaddr.IPv4.parse('255.192.164.0').prefixLengthFromSubnetMask()  == null
+```
+
+`subnetMaskFromPrefixLength()` will return an IPv4 netmask for a valid CIDR prefix length.
+
+```js
+ipaddr.IPv4.subnetMaskFromPrefixLength(24) == "255.255.255.0"
+ipaddr.IPv4.subnetMaskFromPrefixLength(29) == "255.255.255.248"
+```
+
+`broadcastAddressFromCIDR()` will return the broadcast address for a given IPv4 interface and netmask in CIDR notation.
+```js
+ipaddr.IPv4.broadcastAddressFromCIDR("172.0.0.1/24") == "172.0.0.255"
+```
+`networkAddressFromCIDR()` will return the network address for a given IPv4 interface and netmask in CIDR notation.
+```js
+ipaddr.IPv4.networkAddressFromCIDR("172.0.0.1/24") == "172.0.0.0"
+```
+
+#### Conversion
+
+IPv4 and IPv6 can be converted bidirectionally to and from network byte order (MSB) byte arrays.
+
+The `fromByteArray()` method will take an array and create an appropriate IPv4 or IPv6 object
+if the input satisfies the requirements. For IPv4 it has to be an array of four 8-bit values,
+while for IPv6 it has to be an array of sixteen 8-bit values.
+
+For example:
+```js
+var addr = ipaddr.fromByteArray([0x7f, 0, 0, 1]);
+addr.toString(); // => "127.0.0.1"
+```
+
+or
+
+```js
+var addr = ipaddr.fromByteArray([0x20, 1, 0xd, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+addr.toString(); // => "2001:db8::1"
+```
+
+Both objects also offer a `toByteArray()` method, which returns an array in network byte order (MSB).
+
+For example:
+```js
+var addr = ipaddr.parse("127.0.0.1");
+addr.toByteArray(); // => [0x7f, 0, 0, 1]
+```
+
+or
+
+```js
+var addr = ipaddr.parse("2001:db8::1");
+addr.toByteArray(); // => [0x20, 1, 0xd, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
 ```
