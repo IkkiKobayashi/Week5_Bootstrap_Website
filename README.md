@@ -1,203 +1,128 @@
-# negotiator
+# encodeurl
 
 [![NPM Version][npm-image]][npm-url]
 [![NPM Downloads][downloads-image]][downloads-url]
 [![Node.js Version][node-version-image]][node-version-url]
-[![Build Status][github-actions-ci-image]][github-actions-ci-url]
+[![Build Status][travis-image]][travis-url]
 [![Test Coverage][coveralls-image]][coveralls-url]
 
-An HTTP content negotiator for Node.js
+Encode a URL to a percent-encoded form, excluding already-encoded sequences
 
 ## Installation
 
+This is a [Node.js](https://nodejs.org/en/) module available through the
+[npm registry](https://www.npmjs.com/). Installation is done using the
+[`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
+
 ```sh
-$ npm install negotiator
+$ npm install encodeurl
 ```
 
 ## API
 
 ```js
-var Negotiator = require('negotiator')
+var encodeUrl = require('encodeurl')
 ```
 
-### Accept Negotiation
+### encodeUrl(url)
+
+Encode a URL to a percent-encoded form, excluding already-encoded sequences.
+
+This function will take an already-encoded URL and encode all the non-URL
+code points (as UTF-8 byte sequences). This function will not encode the
+"%" character unless it is not part of a valid sequence (`%20` will be
+left as-is, but `%foo` will be encoded as `%25foo`).
+
+This encode is meant to be "safe" and does not throw errors. It will try as
+hard as it can to properly encode the given URL, including replacing any raw,
+unpaired surrogate pairs with the Unicode replacement character prior to
+encoding.
+
+This function is _similar_ to the intrinsic function `encodeURI`, except it
+will not encode the `%` character if that is part of a valid sequence, will
+not encode `[` and `]` (for IPv6 hostnames) and will replace raw, unpaired
+surrogate pairs with the Unicode replacement character (instead of throwing).
+
+## Examples
+
+### Encode a URL containing user-controled data
 
 ```js
-availableMediaTypes = ['text/html', 'text/plain', 'application/json']
+var encodeUrl = require('encodeurl')
+var escapeHtml = require('escape-html')
 
-// The negotiator constructor receives a request object
-negotiator = new Negotiator(request)
+http.createServer(function onRequest (req, res) {
+  // get encoded form of inbound url
+  var url = encodeUrl(req.url)
 
-// Let's say Accept header is 'text/html, application/*;q=0.2, image/jpeg;q=0.8'
+  // create html message
+  var body = '<p>Location ' + escapeHtml(url) + ' not found</p>'
 
-negotiator.mediaTypes()
-// -> ['text/html', 'image/jpeg', 'application/*']
-
-negotiator.mediaTypes(availableMediaTypes)
-// -> ['text/html', 'application/json']
-
-negotiator.mediaType(availableMediaTypes)
-// -> 'text/html'
+  // send a 404
+  res.statusCode = 404
+  res.setHeader('Content-Type', 'text/html; charset=UTF-8')
+  res.setHeader('Content-Length', String(Buffer.byteLength(body, 'utf-8')))
+  res.end(body, 'utf-8')
+})
 ```
 
-You can check a working example at `examples/accept.js`.
-
-#### Methods
-
-##### mediaType()
-
-Returns the most preferred media type from the client.
-
-##### mediaType(availableMediaType)
-
-Returns the most preferred media type from a list of available media types.
-
-##### mediaTypes()
-
-Returns an array of preferred media types ordered by the client preference.
-
-##### mediaTypes(availableMediaTypes)
-
-Returns an array of preferred media types ordered by priority from a list of
-available media types.
-
-### Accept-Language Negotiation
+### Encode a URL for use in a header field
 
 ```js
-negotiator = new Negotiator(request)
+var encodeUrl = require('encodeurl')
+var escapeHtml = require('escape-html')
+var url = require('url')
 
-availableLanguages = ['en', 'es', 'fr']
+http.createServer(function onRequest (req, res) {
+  // parse inbound url
+  var href = url.parse(req)
 
-// Let's say Accept-Language header is 'en;q=0.8, es, pt'
+  // set new host for redirect
+  href.host = 'localhost'
+  href.protocol = 'https:'
+  href.slashes = true
 
-negotiator.languages()
-// -> ['es', 'pt', 'en']
+  // create location header
+  var location = encodeUrl(url.format(href))
 
-negotiator.languages(availableLanguages)
-// -> ['es', 'en']
+  // create html message
+  var body = '<p>Redirecting to new site: ' + escapeHtml(location) + '</p>'
 
-language = negotiator.language(availableLanguages)
-// -> 'es'
+  // send a 301
+  res.statusCode = 301
+  res.setHeader('Content-Type', 'text/html; charset=UTF-8')
+  res.setHeader('Content-Length', String(Buffer.byteLength(body, 'utf-8')))
+  res.setHeader('Location', location)
+  res.end(body, 'utf-8')
+})
 ```
 
-You can check a working example at `examples/language.js`.
+## Testing
 
-#### Methods
-
-##### language()
-
-Returns the most preferred language from the client.
-
-##### language(availableLanguages)
-
-Returns the most preferred language from a list of available languages.
-
-##### languages()
-
-Returns an array of preferred languages ordered by the client preference.
-
-##### languages(availableLanguages)
-
-Returns an array of preferred languages ordered by priority from a list of
-available languages.
-
-### Accept-Charset Negotiation
-
-```js
-availableCharsets = ['utf-8', 'iso-8859-1', 'iso-8859-5']
-
-negotiator = new Negotiator(request)
-
-// Let's say Accept-Charset header is 'utf-8, iso-8859-1;q=0.8, utf-7;q=0.2'
-
-negotiator.charsets()
-// -> ['utf-8', 'iso-8859-1', 'utf-7']
-
-negotiator.charsets(availableCharsets)
-// -> ['utf-8', 'iso-8859-1']
-
-negotiator.charset(availableCharsets)
-// -> 'utf-8'
+```sh
+$ npm test
+$ npm run lint
 ```
 
-You can check a working example at `examples/charset.js`.
+## References
 
-#### Methods
+- [RFC 3986: Uniform Resource Identifier (URI): Generic Syntax][rfc-3986]
+- [WHATWG URL Living Standard][whatwg-url]
 
-##### charset()
-
-Returns the most preferred charset from the client.
-
-##### charset(availableCharsets)
-
-Returns the most preferred charset from a list of available charsets.
-
-##### charsets()
-
-Returns an array of preferred charsets ordered by the client preference.
-
-##### charsets(availableCharsets)
-
-Returns an array of preferred charsets ordered by priority from a list of
-available charsets.
-
-### Accept-Encoding Negotiation
-
-```js
-availableEncodings = ['identity', 'gzip']
-
-negotiator = new Negotiator(request)
-
-// Let's say Accept-Encoding header is 'gzip, compress;q=0.2, identity;q=0.5'
-
-negotiator.encodings()
-// -> ['gzip', 'identity', 'compress']
-
-negotiator.encodings(availableEncodings)
-// -> ['gzip', 'identity']
-
-negotiator.encoding(availableEncodings)
-// -> 'gzip'
-```
-
-You can check a working example at `examples/encoding.js`.
-
-#### Methods
-
-##### encoding()
-
-Returns the most preferred encoding from the client.
-
-##### encoding(availableEncodings)
-
-Returns the most preferred encoding from a list of available encodings.
-
-##### encodings()
-
-Returns an array of preferred encodings ordered by the client preference.
-
-##### encodings(availableEncodings)
-
-Returns an array of preferred encodings ordered by priority from a list of
-available encodings.
-
-## See Also
-
-The [accepts](https://npmjs.org/package/accepts#readme) module builds on
-this module and provides an alternative interface, mime type validation,
-and more.
+[rfc-3986]: https://tools.ietf.org/html/rfc3986
+[whatwg-url]: https://url.spec.whatwg.org/
 
 ## License
 
 [MIT](LICENSE)
 
-[npm-image]: https://img.shields.io/npm/v/negotiator.svg
-[npm-url]: https://npmjs.org/package/negotiator
-[node-version-image]: https://img.shields.io/node/v/negotiator.svg
-[node-version-url]: https://nodejs.org/en/download/
-[coveralls-image]: https://img.shields.io/coveralls/jshttp/negotiator/master.svg
-[coveralls-url]: https://coveralls.io/r/jshttp/negotiator?branch=master
-[downloads-image]: https://img.shields.io/npm/dm/negotiator.svg
-[downloads-url]: https://npmjs.org/package/negotiator
-[github-actions-ci-image]: https://img.shields.io/github/workflow/status/jshttp/negotiator/ci/master?label=ci
-[github-actions-ci-url]: https://github.com/jshttp/negotiator/actions/workflows/ci.yml
+[npm-image]: https://img.shields.io/npm/v/encodeurl.svg
+[npm-url]: https://npmjs.org/package/encodeurl
+[node-version-image]: https://img.shields.io/node/v/encodeurl.svg
+[node-version-url]: https://nodejs.org/en/download
+[travis-image]: https://img.shields.io/travis/pillarjs/encodeurl.svg
+[travis-url]: https://travis-ci.org/pillarjs/encodeurl
+[coveralls-image]: https://img.shields.io/coveralls/pillarjs/encodeurl.svg
+[coveralls-url]: https://coveralls.io/r/pillarjs/encodeurl?branch=master
+[downloads-image]: https://img.shields.io/npm/dm/encodeurl.svg
+[downloads-url]: https://npmjs.org/package/encodeurl
